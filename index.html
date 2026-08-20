@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>坦克大战 · 科技纪元</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div id="game-wrap">
+    <!-- 顶部 HUD -->
+    <div id="hud">
+      <div class="hud-group left">
+        <span id="hud-score">得分 0</span>
+        <span id="hud-wave">波次 1</span>
+        <span id="hud-level" class="hidden">关卡 01</span>
+      </div>
+      <div class="hud-group center">
+        <span id="hud-mode"></span>
+        <span id="hud-diff"></span>
+        <span id="hud-fire">火力 Lv1</span>
+        <span id="hud-shield" class="hidden">护盾 0s</span>
+      </div>
+      <div class="hud-group right">
+        <span id="hud-enemies">敌 0</span>
+        <span id="hud-hp">♥ ♥ ♥ ♥</span>
+      </div>
+    </div>
+
+    <!-- 全局控制区：所有按钮均保留至少 44px 触控热区 -->
+    <div id="top-controls" aria-label="游戏控制">
+      <button class="icon-btn" id="btn-sound" type="button" aria-label="切换音效" title="音效">◖)))</button>
+      <button class="icon-btn" id="btn-home" type="button" aria-label="返回首页" title="返回首页">⌂</button>
+      <button class="icon-btn" id="btn-pause" type="button" aria-label="暂停" title="暂停">Ⅱ</button>
+    </div>
+
+    <!-- Boss 血条 -->
+    <div id="boss-bar-wrap" class="hidden">
+      <div id="boss-name">BOSS</div>
+      <div id="boss-bar"><div id="boss-bar-fill"></div></div>
+    </div>
+
+    <!-- 游戏画面 -->
+    <div id="game">
+      <canvas id="canvas" width="1260" height="740"></canvas>
+    </div>
+
+    <!-- 移动端触控 -->
+  <div id="touch-controls" class="hidden" aria-label="触控操作">
+      <div id="joystick">
+        <div id="joystick-base"></div>
+        <div id="joystick-knob"></div>
+      </div>
+      <div id="fire-btn">FIRE</div>
+    </div>
+  </div>
+
+  <div id="orientation-lock" class="orientation-lock hidden" role="dialog" aria-live="polite">
+    <div class="orientation-card">
+      <div class="orientation-icon">↔</div>
+      <strong>请横屏游玩</strong>
+      <span>旋转手机后，游戏会自动适配画面与操作区域</span>
+      <button id="orientation-retry" type="button">重新检测</button>
+    </div>
+  </div>
+
+  <!-- 全屏覆盖层 -->
+  <div id="overlay" class="overlay">
+    <div class="panel" id="panel">
+      <h1 class="title" id="panel-title">坦克大战 · 科技纪元</h1>
+      <p class="subtitle" id="panel-subtitle">TECH TANK BATTLE</p>
+      <p class="author">LSQ</p>
+      <p class="desc" id="panel-desc">抵御波次进攻，保护基地，击败关底 Boss。</p>
+
+      <!-- 大厅选项 -->
+      <div id="lobby-options" class="lobby-options">
+        <div class="option-group">
+          <span class="opt-label">游戏模式</span>
+          <div class="opt-btns" id="mode-btns">
+            <button class="opt-btn active" data-val="campaign">通关模式</button>
+            <button class="opt-btn" data-val="endless">无尽模式</button>
+          </div>
+        </div>
+        <div class="option-group">
+          <span class="opt-label">难度</span>
+          <div class="opt-btns" id="diff-btns">
+            <button class="opt-btn" data-val="easy">简单</button>
+            <button class="opt-btn active" data-val="normal">普通</button>
+            <button class="opt-btn" data-val="hard">困难</button>
+          </div>
+        </div>
+        <button id="btn-warehouse" class="warehouse-entry" type="button">▣　仓库 <span id="lobby-coins">金币 0</span></button>
+      </div>
+
+      <button id="btn-main" class="btn">开始游戏</button>
+      <p class="ctrl" id="ctrl-hint">移动 WASD / 方向键 · 射击 空格 / J · 暂停 P / Esc</p>
+    </div>
+  </div>
+
+  <!-- 仓库 -->
+  <div id="warehouse" class="overlay hidden" aria-hidden="true">
+    <div class="panel warehouse-panel">
+      <button id="warehouse-close" class="close-btn" type="button" aria-label="关闭仓库">×</button>
+      <h2 class="warehouse-title">仓库 / ARMORY</h2>
+      <div class="warehouse-balance">金币 <strong id="warehouse-coins">0</strong></div>
+      <div class="warehouse-tabs">
+        <button class="warehouse-tab active" data-tab="skins" type="button">坦克皮肤</button>
+        <button class="warehouse-tab" data-tab="weapons" type="button">武器装备</button>
+      </div>
+      <div id="warehouse-list" class="warehouse-list"></div>
+      <p class="warehouse-tip">皮肤只改变外观；武器会影响弹速、伤害和弹道。</p>
+    </div>
+  </div>
+
+  <div id="confirm-dialog" class="overlay hidden" aria-hidden="true">
+    <div class="panel confirm-panel">
+      <h2 id="confirm-title">返回首页？</h2>
+      <p id="confirm-desc">当前进度将结束，但存档会保留。</p>
+      <div class="confirm-actions">
+        <button id="confirm-cancel" class="btn secondary" type="button">取消</button>
+        <button id="confirm-ok" class="btn" type="button">确认</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 中央横幅 -->
+  <div id="banner" class="banner hidden">
+    <div id="banner-main"></div>
+    <div id="banner-sub"></div>
+  </div>
+
+  <!-- 关卡开场动画遮罩 -->
+  <div id="level-intro" class="level-intro hidden">
+    <div id="level-intro-text"></div>
+    <div id="level-intro-sub"></div>
+  </div>
+
+  <script>
+    // Chrome/Edge/Safari 会阻止 file:// 页面加载 ES Module，直接双击 HTML 时按钮自然不会绑定。
+    // 提前给出明确提示，避免用户误以为大厅控件失效。
+    if (location.protocol === 'file:') {
+      const panel = document.getElementById('panel');
+      if (panel) {
+        panel.innerHTML = '<h1 class="title">请通过本地服务器打开</h1><p class="desc">桌面端直接双击 HTML 会被浏览器阻止模块加载。请运行项目中的“启动坦克大战.bat”，再打开游戏。</p>';
+      }
+    }
+  </script>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
